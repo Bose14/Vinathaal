@@ -1,5 +1,8 @@
 
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from '@/context/AuthContext';
+import { WorkspaceProvider } from '@/context/WorkspaceContext';
+import Workspaces from './pages/Workspaces';
 import Index from './pages/Index';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -24,6 +27,8 @@ import './App.css';
 function App() {
   return (
     <Router>
+      <AuthProvider>
+      <WorkspaceProvider>
       <div className="App">
         <Routes>
           <Route path="/" element={<Index />} />
@@ -42,11 +47,14 @@ function App() {
           {/* <Route path="/result/:templateId" element={<Result />} /> */}
           <Route path="/create-community" element={<CreateCommunity />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/workspaces" element={<Workspaces />} />
           <Route path="*" element={<NotFound />} />
           <Route path="/toaster" element={< Toaster/>}/>
         </Routes>
       </div>
       <Toaster />
+      </WorkspaceProvider>
+      </AuthProvider>
     </Router>
   );
 }

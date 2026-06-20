@@ -598,6 +598,7 @@ import EditableQuestionPaper from "@/components/EditableQuestionPaper";
 import { S3Upload } from "../utils/S3Uploads";
 import html2pdf from 'html2pdf.js';
 import { generatePDF } from "../utils/pdfGenerator";
+import { API_BASE } from "@/lib/api";
 import {
   Document,
   Packer,
@@ -644,7 +645,7 @@ interface AnswerItem {
 
 const Result = () => {
   const navigate = useNavigate();
-  const api_token = localStorage.getItem("apiToken");
+  const api_token = localStorage.getItem("apiToken") ?? "";
   const [config, setConfig] = useState<QuestionPaperConfig | null>(null);
   const [showAnswerKey, setShowAnswerKey] = useState(false);
   const [answerKey, setAnswerKey] = useState<AnswerItem[]>([]);
@@ -1008,8 +1009,7 @@ const Result = () => {
     formData.append("pdf", pdfBlob, "question_paper.pdf");
     formData.append("password", userPassword);
 
-    // const res = await fetch("https://vinathaal.azhizen.com/api/encrypt-pdf", {
-    const res = await fetch("http://localhost:3001/api/encrypt-pdf", {
+    const res = await fetch(`${API_BASE}/encrypt-pdf`, {
       method: "POST",
       body: formData
     });
@@ -1042,8 +1042,7 @@ const Result = () => {
       formData.append("pdf", pdfBlob, "question_paper.pdf");
       formData.append("password", userPassword);
 
-      // const res = await fetch("https://vinathaal-backend-905806810470.asia-south1.run.app/api/encrypt-pdf", {
-      const res = await fetch("http://localhost:3001/api/encrypt-pdf", {
+      const res = await fetch(`${API_BASE}/encrypt-pdf`, {
         method: "POST",
         body: formData
       });

@@ -239,7 +239,7 @@ const MCQResultPage = () => {
 
       console.log("Sending questions for answer key:", questions);
 
-      const response = await fetch('https://vinathaal-backend-905806810470.asia-south1.run.app/api/generate-mcq-answer-key', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api'}/generate-mcq-answer-key`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

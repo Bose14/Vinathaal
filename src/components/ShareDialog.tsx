@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogTrigger} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Share, Mail, MessageCircle, Upload, FileDown, Loader2 } from "lucide-react";
-// import { DialogDescription } from "@radix-ui/react-dialog";
+import { API_BASE } from "@/lib/api";
 
 interface ShareDialogProps {
   title: string;
@@ -53,7 +53,7 @@ const ShareDialog = ({ title, content, pdfBlob }: ShareDialogProps) => {
       formData.append("file", pdfBlob, title);
       formData.append("userName", userName);
 
-      const res = await fetch("http://loclhost:3001/api/send-email", {
+      const res = await fetch(`${API_BASE}/send-email`, {
         method: "POST",
         body: formData,
       });

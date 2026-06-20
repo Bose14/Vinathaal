@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,23 +33,7 @@ interface MCQSection {
 
 const MCQGenerator = () => {
   const navigate = useNavigate();
-
-  // Check authentication on component mount
-  useEffect(() => {
-    const checkAuth = () => {
-      const authToken = localStorage.getItem('authToken');
-      const userData = localStorage.getItem('user');
-      
-      if (!authToken || !userData) {
-        // Store current path for redirect after login
-        sessionStorage.setItem('redirectAfterLogin', '/mcq-generator');
-        navigate('/login');
-        return;
-      }
-    };
-
-    checkAuth();
-  }, [navigate]);
+  useRequireAuth('/mcq-generator');
 
   // Quiz form state
   const [quizTitle, setQuizTitle] = useState("");

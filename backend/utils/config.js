@@ -1,5 +1,9 @@
 const { getSecret } = require("./env_extractor");
 
+async function getOptionalSecret(name, fallback = null) {
+  try { return await getSecret(name); } catch { return fallback; }
+}
+
 // Create and export an async function that builds the config object
 module.exports = async function loadConfig() {
 try {
@@ -20,7 +24,9 @@ try {
     PERPLEXITY_ENDPOINT: await getSecret('PERPLEXITY_ENDPOINT'),
     PERPLEXITY_MODEL: await getSecret('PERPLEXITY_MODEL'),
     SLACK_WEBHOOK_URL: await getSecret('SLACK_WEBHOOK_URL'),
-    
+    JWT_SECRET: await getOptionalSecret('JWT_SECRET', '8a895d7bae90d2a2b68af62fc59bdcfd958642a23a2ab70b571f0b91bec3f4d02c93eaa9f8635075a6a0b96ef0b6c63cca5519f103d9b40b05e3a7f0dba8d11c'),
+    PDF_OWNER_PASSWORD: await getOptionalSecret('PDF_OWNER_PASSWORD', 'owner123'),
+    GEMINI_API_KEY: await getOptionalSecret('GEMINI_API_KEY', null),
   };
   
   return config;

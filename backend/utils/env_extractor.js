@@ -1,41 +1,69 @@
 // utils/env_extractor.js
+// Supports both local .env (development) and MySQL config table (production)
 
-const { SSMClient, GetParameterCommand } = require("@aws-sdk/client-ssm");
+require('dotenv').config();
+const mysql = require('mysql2/promise');
+const fs = require('fs');
 
-// 1. Create the SSM client ONCE, outside the function, to be reused.
-// const ssmClient = new SSMClient({ region: "us-east-1" });
-const ssmClient = new SSMClient({ region: "ap-southeast-2" });
+let configCache = null;
+let cacheExpiry = null;
+const CACHE_TTL = 5 * 60 * 1000; // Cache for 5 minutes
 
 /**
- * Fetches a parameter from AWS SSM Parameter Store.
- * @param {string} parameterName - The name of the parameter to fetch.
- * @returns {Promise<string>} The value of the parameter.
+ * Fetches a configuration value from .env file (local) or MySQL config table (production)
+ * @param {string} parameterName - The name of the configuration parameter
+ * @returns {Promise<string>} The value of the parameter
  */
 async function getSecret(parameterName) {
-
-  const command = new GetParameterCommand({
-    Name: parameterName,
-    // Set to 'true' only if the parameter is a 'SecureString' type.
-    // For 'String' type, this is correctly set to 'false'.
-    // WithDecryption: false,
-    WithDecryption: true,
-  });
-
   try {
+    // 1. Try to get from .env file first (local development)
+    if (process.env[parameterName]) {
+      return process.env[parameterName];
+    }
 
-    // Use the single, shared client to send the command.
-    const response = await ssmClient.send(command);
+    // 2. If not in .env, try to get from database (production)
+    // Return cached value if still valid
+    if (configCache && cacheExpiry && Date.now() < cacheExpiry) {
+      const cachedValue = configCache[parameterName];
+      if (cachedValue !== undefined) {
+        return cachedValue;
+      }
+    }
 
-    if (response.Parameter && response.Parameter.Value) {
-      return response.Parameter.Value;
-    } else {
-      // This is a critical failure, so we throw an error.
-      throw new Error(`Parameter '${parameterName}' not found or value is empty.`);
+    // Create connection to database
+    const connection = await mysql.createConnection({
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'vinathaal',
+      password: process.env.DB_PASSWORD || 'AppUser@2024',
+      database: process.env.DB_NAME || 'vinathaal',
+    });
+
+    try {
+      // Fetch all config at once
+      const [rows] = await connection.execute(
+        'SELECT key_name, value FROM config'
+      );
+
+      // Build config object
+      configCache = {};
+      rows.forEach(row => {
+        configCache[row.key_name] = row.value;
+      });
+
+      // Set cache expiry
+      cacheExpiry = Date.now() + CACHE_TTL;
+
+      // Return the requested parameter
+      if (configCache[parameterName]) {
+        return configCache[parameterName];
+      } else {
+        throw new Error(`Parameter '${parameterName}' not found in .env or config table.`);
+      }
+    } finally {
+      await connection.end();
     }
   } catch (error) {
-    console.error(`❌ Error fetching parameter '${parameterName}': ${error.name}`);
-    // 2. Re-throw the error. This will stop the server startup process,
-    // which is what you want if a critical config value is missing.
+    console.error(`❌ Error fetching parameter '${parameterName}': ${error.message}`);
     throw error;
   }
 }

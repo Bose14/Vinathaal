@@ -3,107 +3,139 @@ const multer = require('multer');
 const Tesseract = require('tesseract.js');
 const fs = require('fs');
 const sharp = require('sharp');
+const pdfParse = require('pdf-parse');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
 
-// === 🧠 Smart Roman Numeral Fixer ===
-function normalizeUnitsWithInference(text) {
-  const romanMap = {
-    I: ['I', 'l', '1', '|'],
-    V: ['V'],
-    X: ['X']
-  };
+const GEMINI_PROMPT = `You are an academic syllabus parser. Extract the following from the text below and return ONLY valid JSON with no markdown or explanation:
 
-  const romanNumerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
-
-  let count = 0;
-
-  return text.replace(/UNIT\s+([A-Za-z|1]{1,5})/g, (match, fuzzy) => {
-    const cleaned = fuzzy
-      .toUpperCase()
-      .split('')
-      .map(c => {
-        if (romanMap.I.includes(c)) return 'I';
-        if (romanMap.V.includes(c)) return 'V';
-        if (romanMap.X.includes(c)) return 'X';
-        return '';
-      })
-      .join('');
-
-    // If it's a valid roman numeral, use it. Else fallback to inferred unit
-    const normalized = romanNumerals.includes(cleaned)
-      ? cleaned
-      : romanNumerals[count] || 'I';
-
-    return `UNIT ${romanNumerals[count++] || 'I'}`;
-  });
+{
+  "subjectName": "full subject name (e.g. Data Structures and Algorithms)",
+  "subjectCode": "subject code if present (e.g. CS301), else empty string",
+  "syllabusText": "all unit content formatted as:\\nUNIT I\\n<topics>\\n\\nUNIT II\\n<topics>\\n..."
 }
 
-router.post('/extract-syllabus', upload.single('image'), async (req, res) => {
-  const imagePath = req.file.path;
-  const preprocessedPath = imagePath + '-processed.png';
+Rules:
+- subjectName: look for a title near subject code pattern like CS301, MA201, etc. If no code, use the first prominent heading that isn't a university name.
+- syllabusText: include everything from UNIT I to the end of units. Exclude textbooks, references, outcomes sections.
+- Preserve all topic names and subtopics under each unit.
+- If no clear units found, put all content under "UNIT I".
 
-  try {
-    await sharp(imagePath)
-      .resize({ width: 1500 })
-      .grayscale()
-      .threshold(140)
-      .sharpen()
-      .normalize()
-      .toFile(preprocessedPath);
+Syllabus text:
+`;
 
-    const result = await Tesseract.recognize(preprocessedPath, 'eng', {
-      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789:().,- ',
-      preserve_interword_spaces: '1',
+module.exports = (config) => {
+  const router = express.Router();
+
+  const gemini = config.GEMINI_API_KEY
+    ? new GoogleGenerativeAI(config.GEMINI_API_KEY)
+    : null;
+
+  async function structureWithGemini(rawText) {
+    if (!gemini) throw new Error('Gemini API key not configured');
+
+    const model = gemini.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      generationConfig: { responseMimeType: 'application/json' },
     });
 
-    let text = result.data.text || '';
+    const result = await model.generateContent(GEMINI_PROMPT + rawText.slice(0, 8000));
+    const json = JSON.parse(result.response.text());
 
-    // Normalize Roman numerals (e.g. UNIT If → UNIT III)
-    text = normalizeUnitsWithInference(text);
-    text = '\n' + text.trim() + '\n';
+    if (!json.subjectName || !json.syllabusText) {
+      throw new Error('Gemini returned incomplete data');
+    }
+    return json;
+  }
 
-    // Extract subject name from first few lines
+  function regexFallback(text) {
     const lines = text.split('\n').filter(Boolean).slice(0, 6);
-
-    let subjectName = "Unknown";
-
+    let subjectName = 'Unknown';
     for (const line of lines) {
       const match = line.match(/\b[A-Z]{1,3}\d{4}\b\s+(.*)/);
       if (match) {
-        let rawName = match[1].replace(/\s{2,}/g, ' ').trim();
-        subjectName = rawName.replace(/\bL\s*T\s*P\s*C\b.*$/i, '').trim();
+        subjectName = match[1].replace(/\s{2,}/g, ' ').replace(/\bL\s*T\s*P\s*C\b.*$/i, '').trim();
         break;
       }
     }
 
-    // Extract syllabus content from UNIT I to OUTCOMES or end
     const unitStart = text.search(/UNIT\s+I/i);
-    const endMatch = text.slice(unitStart).match(/(OUTCOMES|TEXT\s+BOOKS|REFERENCES|TOTAL\s*:\s*\d+\s*PERIODS)/i);
-    const endIndex = endMatch ? unitStart + endMatch.index : text.length;
+    const slice = unitStart !== -1 ? text.slice(unitStart) : text;
+    const endMatch = slice.match(/(OUTCOMES|TEXT\s*BOOKS|REFERENCES|TOTAL\s*:\s*\d+)/i);
+    const syllabusText = (endMatch ? slice.slice(0, endMatch.index) : slice)
+      .replace(/(UNIT\s+[IVX]+)/g, '\n\n$1')
+      .trim();
 
-    const unitsText =
-      unitStart !== -1
-        ? text.slice(unitStart, endIndex).replace(/(UNIT\s+[IVX]+)/g, '\n\n$1')
-        : text;
+    return { subjectName, subjectCode: '', syllabusText };
+  }
 
-    res.json({
-      subjectName,
-      syllabusText: unitsText
-    });
-
-  } catch (err) {
-    console.error("❌ OCR/Extraction error:", err);
-    res.status(500).json({ error: err.message });
-  } finally {
+  async function runOCR(imagePath) {
+    const preprocessedPath = imagePath + '-processed.png';
     try {
-      fs.unlinkSync(imagePath);
-      fs.unlinkSync(preprocessedPath);
-    } catch (e) {
-      console.warn("⚠️ Cleanup error:", e.message);
+      await sharp(imagePath)
+        .resize({ width: 2480 })
+        .grayscale()
+        .normalize()
+        .sharpen()
+        .toFile(preprocessedPath);
+
+      const { data: { text } } = await Tesseract.recognize(preprocessedPath, 'eng', {
+        tessedit_pageseg_mode: '1',
+        preserve_interword_spaces: '1',
+      });
+
+      return text || '';
+    } finally {
+      if (fs.existsSync(preprocessedPath)) fs.unlinkSync(preprocessedPath);
     }
   }
-});
 
-module.exports = router;
+  router.post('/extract-syllabus', upload.single('image'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const filePath = req.file.path;
+    const isPDF = req.file.mimetype === 'application/pdf' ||
+                  req.file.originalname?.toLowerCase().endsWith('.pdf');
+
+    try {
+      let rawText = '';
+
+      if (isPDF) {
+        const buffer = fs.readFileSync(filePath);
+        const { text } = await pdfParse(buffer);
+        rawText = text.trim();
+
+        if (rawText.length < 100) {
+          return res.status(422).json({
+            error: 'This PDF appears to be scanned and has no readable text. Please upload a photo or screenshot of the syllabus instead.',
+          });
+        }
+      } else {
+        rawText = await runOCR(filePath);
+
+        if (!rawText || rawText.trim().length < 50) {
+          return res.status(422).json({
+            error: 'Could not extract text from the image. Please ensure the image is clear and well-lit.',
+          });
+        }
+      }
+
+      try {
+        const structured = await structureWithGemini(rawText);
+        return res.json(structured);
+      } catch (geminiErr) {
+        console.warn('Gemini structuring failed, using regex fallback:', geminiErr.message);
+        return res.json(regexFallback(rawText));
+      }
+
+    } catch (err) {
+      console.error('Extraction error:', err);
+      res.status(500).json({ error: 'Failed to extract syllabus. Please try again.' });
+    } finally {
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+  });
+
+  return router;
+};
