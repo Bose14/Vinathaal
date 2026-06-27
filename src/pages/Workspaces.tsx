@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Edit2, Building2, GraduationCap, BookOpen, Star, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { Plus, Trash2, Edit2, Building2, GraduationCap, BookOpen, Star, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -30,10 +29,10 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  university: 'bg-blue-100 text-blue-700',
-  school: 'bg-green-100 text-green-700',
-  coaching: 'bg-purple-100 text-purple-700',
-  other: 'bg-slate-100 text-slate-700',
+  university: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  school:     'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  coaching:   'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  other:      'bg-slate-100 text-slate-700 dark:bg-slate-800/50 dark:text-slate-400',
 };
 
 // ─── Workspace Form ────────────────────────────────────────────────────────────
@@ -376,18 +375,6 @@ export default function Workspaces() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center space-x-2 text-slate-900 hover:text-slate-700">
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back</span>
-            </Link>
-            <img src="/vinathaal%20logo.png" alt="Vinathaal Logo" className="h-12 w-auto object-contain" />
-          </div>
-        </div>
-      </nav>
-
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>

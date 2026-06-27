@@ -7,6 +7,7 @@ export interface User {
   name: string;
   email: string;
   api_token?: string;
+  role?: string;
   picture?: string;
   googleId?: string;
 }
@@ -35,6 +36,7 @@ export interface Section {
 }
 
 export interface PaperHistory {
+  id?: number;
   objectUrl: string;
   created_at: string;
   subjectName: string;
@@ -108,7 +110,7 @@ async function request<T>(
     params?: Record<string, string>;
   } = {}
 ): Promise<T> {
-  const url = new URL(`${API_BASE}${path}`);
+  const url = new URL(`${API_BASE}${path}`, window.location.origin);
 
   if (options.params) {
     Object.entries(options.params).forEach(([k, v]) => url.searchParams.set(k, v));
@@ -187,6 +189,14 @@ export const api = {
       request<{ email: string; data: PaperHistory[] }>('POST', '/get-questions-paper-history', {
         body: { email },
       }),
+
+    getAllHistory: (email: string) =>
+      request<{ email: string; data: PaperHistory[] }>('POST', '/get-all-papers-history', {
+        body: { email },
+      }),
+
+    deletePaper: (id: number) =>
+      request<{ message: string }>('DELETE', `/papers/${id}`),
 
     extractSyllabus: (file: File) => {
       const fd = new FormData();

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,10 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Plus, Trash2, FileText, Image, Settings, Wand2, Brain, Loader2, Building2, ChevronDown } from "lucide-react";
+import { Plus, Trash2, FileText, Image, Settings, Wand2, Brain, Loader2, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { S3Upload } from "@/utils/S3Uploads";
-import Footer from "@/components/Footer";
 import { api } from "@/lib/apiClient";
 import { useAuth } from "@/context/AuthContext";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
@@ -359,415 +358,396 @@ const Generator = () => {
 
   const units = ["UNIT I", "UNIT II", "UNIT III", "UNIT IV", "UNIT V"];
 
+  const inputCls = "h-9 text-xs border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white";
+  const labelCls = "text-xs font-medium text-gray-700 dark:text-gray-300";
+
   return (
-    <div className="min-h-screen bg-gradient-hero">
-      <nav className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center space-x-2 text-slate-900 hover:text-slate-700">
-              <ArrowLeft className="w-5 h-5" />
-              <span className="hidden sm:inline">Back to Home</span>
-            </Link>
-            <div className="flex items-center space-x-2">
-              <img src="/vinathaal%20logo.png" alt="Vinathaal Logo" className="h-12 sm:h-16 w-auto object-contain" />
-            </div>
+    <div className="min-h-full p-6 md:p-8 max-w-5xl mx-auto space-y-6">
+
+      {/* Header */}
+      <div className="animate-fade-in-up">
+        <div className="flex items-center gap-2.5 mb-0.5">
+          <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+            <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           </div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Syllabus Generator</h1>
         </div>
-      </nav>
-
-      <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
-
-        {/* ── Quick Setup ── */}
-        {workspaces.length > 0 && (
-          <Card className="mb-6 border-primary/20 bg-gradient-subtle">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Building2 className="w-4 h-4 text-primary" />
-                <span className="font-medium text-sm text-primary">Quick Setup</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Workspace</Label>
-                  <Select
-                    value={activeWorkspace?.id?.toString() ?? ''}
-                    onValueChange={(v) => {
-                      const ws = workspaces.find((w) => w.id === parseInt(v));
-                      if (ws) applyWorkspace(ws);
-                    }}
-                  >
-                    <SelectTrigger className="text-sm h-9">
-                      <SelectValue placeholder="Select workspace..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {workspaces.map((ws) => (
-                        <SelectItem key={ws.id} value={ws.id.toString()}>
-                          {ws.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Exam Pattern</Label>
-                  <Select
-                    value=""
-                    onValueChange={(v) => {
-                      const p = patterns.find((pat) => pat.id === parseInt(v));
-                      if (p) applyPattern(p);
-                    }}
-                  >
-                    <SelectTrigger className="text-sm h-9">
-                      <SelectValue placeholder={patterns.length === 0 ? 'No patterns saved' : 'Apply a pattern...'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {patterns.map((p) => (
-                        <SelectItem key={p.id} value={p.id.toString()}>
-                          {p.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {activeWorkspace && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  Using <strong>{activeWorkspace.name}</strong>
-                  {activeWorkspace.institution_name ? ` · ${activeWorkspace.institution_name}` : ''}
-                  {patterns.length > 0 ? ` · ${patterns.length} pattern${patterns.length > 1 ? 's' : ''} available` : ''}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="bg-gradient-card border-accent/20">
-            <CardHeader className="text-center p-4 sm:p-6">
-              <CardTitle className="flex items-center justify-center space-x-2 text-primary text-lg sm:text-xl">
-                <FileText className="w-5 h-5" />
-                <span>Upload Syllabus</span>
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm text-text-secondary">Upload your course materials to be analyzed by AI.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6">
-              <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 sm:p-8 text-center hover:border-primary/50 transition-colors cursor-pointer bg-gradient-subtle">
-                <input type="file" accept=".pdf,.doc,.docx,.txt,.jpeg,.jpg" onChange={handleSyllabusUpload} className="hidden" id="syllabus-upload" />
-                <label htmlFor="syllabus-upload" className="cursor-pointer block">
-                  {syllabusFile ? (
-                    <div className="space-y-4">
-                      <FileText className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-accent" />
-                      <p className="text-success font-medium text-sm sm:text-base">Syllabus uploaded: {syllabusFile.name}</p>
-                      <p className="text-xs sm:text-sm text-text-secondary">AI will generate questions based on your syllabus</p>
-                    </div>
-                  ) : (
-                    <>
-                      <FileText className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-accent mb-4" />
-                      <p className="text-text-primary font-medium text-sm sm:text-base">Click to upload your syllabus</p>
-                      <p className="text-xs sm:text-sm text-text-secondary mt-2">PDF, DOC, DOCX, TXT, JPG, JPEG up to 10MB</p>
-                    </>
-                  )}
-                </label>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-card border-accent/20">
-            <CardHeader className="text-center p-4 sm:p-6">
-              <CardTitle className="flex items-center justify-center space-x-2 text-primary text-lg sm:text-xl">
-                <Image className="w-5 h-5" />
-                <span>Upload Header (Optional)</span>
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm text-text-secondary">Upload your institution logo or custom header.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6">
-              <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 sm:p-8 text-center hover:border-primary/50 transition-colors cursor-pointer bg-gradient-subtle">
-                <input type="file" accept="image/*" onChange={handleHeaderImageUpload} className="hidden" id="header-upload" />
-                <label htmlFor="header-upload" className="cursor-pointer block">
-                  {headerImage ? (
-                    <div className="space-y-4">
-                      <img src={headerImage} alt="Header preview" className="max-h-24 sm:max-h-32 mx-auto rounded-lg shadow-md" />
-                      <p className="text-success font-medium text-sm sm:text-base">Header image uploaded successfully!</p>
-                    </div>
-                  ) : (
-                    <>
-                      <Image className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-accent mb-4" />
-                      <p className="text-text-primary font-medium text-sm sm:text-base">Click to upload your university/institution header</p>
-                      <p className="text-xs sm:text-sm text-text-secondary mt-2">PNG, JPG up to 10MB</p>
-                    </>
-                  )}
-                </label>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Upload your syllabus and let AI build your question paper</p>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
-              <Settings className="w-5 h-5" />
-              <span>Configure Question Paper</span>
-            </CardTitle>
+      {/* Quick Setup (workspaces) */}
+      {workspaces.length > 0 && (
+        <Card className="animate-fade-in-up border-gray-100 dark:border-gray-700 dark:bg-gray-800/60 shadow-none">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Building2 className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
+              <span className="text-xs font-semibold text-gray-800 dark:text-white">Quick Setup</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className={labelCls}>Workspace</Label>
+                <Select value={activeWorkspace?.id?.toString() ?? ''} onValueChange={(v) => { const ws = workspaces.find((w) => w.id === parseInt(v)); if (ws) applyWorkspace(ws); }}>
+                  <SelectTrigger className={inputCls}><SelectValue placeholder="Select workspace..." /></SelectTrigger>
+                  <SelectContent className="dark:bg-gray-900 dark:border-gray-700">
+                    {workspaces.map((ws) => <SelectItem key={ws.id} value={ws.id.toString()}>{ws.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className={labelCls}>Exam Pattern</Label>
+                <Select value="" onValueChange={(v) => { const p = patterns.find((pat) => pat.id === parseInt(v)); if (p) applyPattern(p); }}>
+                  <SelectTrigger className={inputCls}><SelectValue placeholder={patterns.length === 0 ? 'No patterns saved' : 'Apply a pattern...'} /></SelectTrigger>
+                  <SelectContent className="dark:bg-gray-900 dark:border-gray-700">
+                    {patterns.map((p) => <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {activeWorkspace && (
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">
+                Using <strong className="text-gray-600 dark:text-gray-300">{activeWorkspace.name}</strong>
+                {activeWorkspace.institution_name ? ` · ${activeWorkspace.institution_name}` : ''}
+                {patterns.length > 0 ? ` · ${patterns.length} pattern${patterns.length > 1 ? 's' : ''} available` : ''}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Upload row */}
+      <div className="animate-fade-in-up delay-100 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Syllabus upload */}
+        <Card className="border-gray-100 dark:border-gray-700 dark:bg-gray-800/60 shadow-none">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-blue-500" />
+              <CardTitle className="text-sm font-semibold text-gray-800 dark:text-white">Upload Syllabus</CardTitle>
+            </div>
+            <CardDescription className="text-xs dark:text-gray-500">Upload your course materials to be analysed by AI</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="university" className="text-sm">University/Institution</Label>
-                <Input id="university" placeholder="e.g., Anna University" value={university} onChange={(e) => setUniversity(e.target.value)} className="text-sm" />
+          <CardContent>
+            <input type="file" accept=".pdf,.doc,.docx,.txt,.jpeg,.jpg" onChange={handleSyllabusUpload} className="hidden" id="syllabus-upload" />
+            <label htmlFor="syllabus-upload" className="block cursor-pointer">
+              <div className="border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-xl p-6 text-center hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-all duration-200 bg-gray-50/50 dark:bg-gray-900/30">
+                {syllabusFile ? (
+                  <>
+                    <FileText className="w-9 h-9 mx-auto text-blue-500 mb-2" />
+                    <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 truncate">{syllabusFile.name}</p>
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">AI will generate questions from this</p>
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-9 h-9 mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Click to upload syllabus</p>
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">PDF, DOC, DOCX, TXT, JPG up to 10MB</p>
+                  </>
+                )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="subject" className="text-sm">Subject Name</Label>
-                <Input id="subject" placeholder="e.g., MATRICES AND CALCULUS" value={subjectName} onChange={(e) => setSubjectName(e.target.value)} readOnly={isSubjectLocked} className={`text-sm ${isSubjectLocked ? "cursor-not-allowed bg-muted text-muted-foreground" : ""}`} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="date" className="text-sm">Exam Date</Label>
-                <Input id="date" type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)} className="text-sm" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="duration" className="text-sm">Duration</Label>
-                <Input id="duration" placeholder="e.g., 3 Hours" value={duration} onChange={(e) => setDuration(e.target.value)} className="text-sm" />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
-                <h3 className="text-base sm:text-lg font-semibold">Sections Configuration</h3>
-                <div className="flex items-center space-x-4">
-                  <span className="text-sm text-success font-medium">Total Marks: {totalMarks}</span>
-                  <Button onClick={addSection} size="sm" variant="outline" className="text-sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Section
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                {sections.map((section) => (
-                  <div key={section.id} className="border border-border rounded-lg p-4 sm:p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-medium text-base">{section.name} Configuration</h4>
-                      {sections.length > 1 && (
-                        <Button onClick={() => removeSection(section.id)} size="sm" variant="outline" className="text-red-600 hover:text-red-700 p-2 h-auto">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                      <div>
-                        <Label className="text-sm">Section Name</Label>
-                        <Input value={section.name} onChange={(e) => updateSection(section.id, 'name', e.target.value)} placeholder="Section A" className="text-sm" />
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch checked={section.isAutoGenerate} onCheckedChange={(checked) => updateSection(section.id, 'isAutoGenerate', checked)} />
-                        <Label className="text-sm">{section.isAutoGenerate ? 'Bulk AI Generation' : 'Individual Question Config'}</Label>
-                      </div>
-                    </div>
-
-                    {section.isAutoGenerate ? (
-                      <div className="space-y-4 bg-gradient-hero p-4 rounded-lg border border-accent/20">
-                        <h5 className="font-medium text-foreground flex items-center text-sm sm:text-base">
-                          <Wand2 className="w-4 h-4 mr-2 text-accent" />
-                          Bulk AI Generation Settings
-                        </h5>
-                        <p className="text-xs text-muted-foreground">Configure common settings for all questions in this section</p>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div>
-                            <Label className="text-xs">Questions</Label>
-                            <Input type="number" value={section.autoConfig.questionCount} onChange={(e) => updateAutoConfig(section.id, 'questionCount', parseInt(e.target.value) || 1)} min="1" max="20" className="text-sm" />
-                          </div>
-                          <div>
-                            <Label className="text-xs">Marks/Q</Label>
-                            <Input type="number" value={section.autoConfig.marksPerQuestion} onChange={(e) => updateAutoConfig(section.id, 'marksPerQuestion', parseInt(e.target.value) || 1)} min="1" max="20" className="text-sm" />
-                          </div>
-                          <div>
-                            <Label className="text-xs">Difficulty</Label>
-                            <Select value={section.autoConfig.difficulty} onValueChange={(value) => updateAutoConfig(section.id, 'difficulty', value)}>
-                              <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Easy">Easy</SelectItem>
-                                <SelectItem value="Medium">Medium</SelectItem>
-                                <SelectItem value="Hard">Hard</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label className="text-xs">Sub-Q/Q</Label>
-                            <Input type="number" value={section.autoConfig.subQuestionsCount} onChange={(e) => updateAutoConfig(section.id, 'subQuestionsCount', parseInt(e.target.value) || 0)} min="0" max="5" className="text-sm" />
-                          </div>
-                        </div>
-
-                        <div>
-                          <Label className="text-sm">Units to Include</Label>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {units.map((unit) => (
-                              <Button key={unit} onClick={() => toggleAutoUnit(section.id, unit)} variant={section.autoConfig.units.includes(unit) ? "default" : "outline"} size="sm" className={`text-xs h-8 ${section.autoConfig.units.includes(unit) ? "bg-primary" : ""}`}>
-                                {unit}
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-4 bg-gradient-hero p-4 rounded-lg border border-accent/20">
-                        <h5 className="font-medium text-foreground flex items-center text-sm sm:text-base">
-                          <Brain className="w-4 h-4 mr-2 text-accent" />
-                          Individual Question Configuration
-                        </h5>
-                        <p className="text-xs text-muted-foreground">Specify how many AI and manual questions you need, then configure each one individually</p>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-card/50 p-4 rounded-lg">
-                          <div>
-                            <Label className="text-xs">AI Questions</Label>
-                            <Input type="number" value={section.individualConfig.aiQuestionCount} onChange={(e) => updateIndividualConfig(section.id, 'aiQuestionCount', parseInt(e.target.value) || 0)} min="0" max="20" placeholder="0" className="text-sm" />
-                          </div>
-                          <div>
-                            <Label className="text-xs">Manual Questions</Label>
-                            <Input type="number" value={section.individualConfig.manualQuestionCount} onChange={(e) => updateIndividualConfig(section.id, 'manualQuestionCount', parseInt(e.target.value) || 0)} min="0" max="20" placeholder="0" className="text-sm" />
-                          </div>
-                          <div>
-                            <Label className="text-xs">Default Marks</Label>
-                            <Input type="number" value={section.individualConfig.defaultMarks} onChange={(e) => updateIndividualConfig(section.id, 'defaultMarks', parseInt(e.target.value) || 1)} min="1" max="20" className="text-sm" />
-                          </div>
-                          <div>
-                            <Label className="text-xs">Default Difficulty</Label>
-                            <Select value={section.individualConfig.defaultDifficulty} onValueChange={(value) => updateIndividualConfig(section.id, 'defaultDifficulty', value)}>
-                              <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Easy">Easy</SelectItem>
-                                <SelectItem value="Medium">Medium</SelectItem>
-                                <SelectItem value="Hard">Hard</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4 bg-card/50 p-4 rounded-lg">
-                          <div>
-                            <Label className="text-xs">Default Unit</Label>
-                            <Select value={section.individualConfig.defaultUnit} onValueChange={(value) => updateIndividualConfig(section.id, 'defaultUnit', value)}>
-                              <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                {units.map((unit) => (<SelectItem key={unit} value={unit}>{unit}</SelectItem>))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label className="text-xs">Default Sub-questions</Label>
-                            <Input type="number" value={section.individualConfig.defaultSubQuestionsCount} onChange={(e) => updateIndividualConfig(section.id, 'defaultSubQuestionsCount', parseInt(e.target.value) || 0)} min="0" max="5" className="text-sm" />
-                          </div>
-                        </div>
-
-                        {section.questions.length === 0 ? (
-                          <div className="text-center py-8 text-muted-foreground bg-card/30 rounded-lg">
-                            <Brain className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-muted-foreground mb-4" />
-                            <p className="mb-2 text-sm">Set AI and Manual question counts above</p>
-                            <p className="text-xs">Questions will appear automatically for individual configuration</p>
-                          </div>
-                        ) : (
-                          <div className="bg-card/30 p-3 rounded-lg">
-                            <p className="text-sm text-accent">
-                              <strong>Total Questions:</strong> {section.questions.length} ({section.questions.filter(q => q.isAIGenerated).length} AI + {section.questions.filter(q => !q.isAIGenerated).length} Manual)
-                            </p>
-                          </div>
-                        )}
-
-                        <div className="space-y-4">
-                          {section.questions.map((question, questionIndex) => (
-                            <div key={question.id} className={`border rounded p-4 ${question.isAIGenerated ? 'bg-gradient-hero border-accent/30' : 'bg-muted border-border'}`}>
-                              <div className="flex justify-between items-start mb-3">
-                                <h6 className="text-sm font-medium text-foreground flex items-center">
-                                  {question.isAIGenerated && <Wand2 className="w-4 h-4 mr-1 text-accent" />}
-                                  Question {questionIndex + 1} {question.isAIGenerated ? '(AI Generated)' : '(Manual)'}
-                                </h6>
-                                <Button onClick={() => removeQuestion(section.id, question.id)} size="sm" variant="ghost" className="text-red-600 hover:text-red-700 p-2 h-auto">
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-
-                              <div className="space-y-4">
-                                {!question.isAIGenerated && (
-                                  <div>
-                                    <Label className="text-xs">Question Text</Label>
-                                    <Textarea value={question.text || ""} onChange={(e) => updateQuestion(section.id, question.id, 'text', e.target.value)} placeholder="Enter your question here..." className="min-h-[60px] sm:min-h-[80px] text-sm" />
-                                  </div>
-                                )}
-
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                  <div>
-                                    <Label className="text-xs">Marks</Label>
-                                    <Input type="number" value={question.marks} onChange={(e) => updateQuestion(section.id, question.id, 'marks', parseInt(e.target.value) || 1)} min="1" max="20" className="text-sm" />
-                                  </div>
-                                  <div>
-                                    <Label className="text-xs">Difficulty</Label>
-                                    <Select value={question.difficulty} onValueChange={(value) => updateQuestion(section.id, question.id, 'difficulty', value)}>
-                                      <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="Easy">Easy</SelectItem>
-                                        <SelectItem value="Medium">Medium</SelectItem>
-                                        <SelectItem value="Hard">Hard</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  <div>
-                                    <Label className="text-xs">Unit</Label>
-                                    <Select value={question.unit} onValueChange={(value) => updateQuestion(section.id, question.id, 'unit', value)}>
-                                      <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-                                      <SelectContent>
-                                        {units.map((unit) => (<SelectItem key={unit} value={unit}>{unit}</SelectItem>))}
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  <div>
-                                    <Label className="text-xs">Sub-questions</Label>
-                                    <Input type="number" value={question.subQuestionsCount} onChange={(e) => updateQuestion(section.id, question.id, 'subQuestionsCount', parseInt(e.target.value) || 0)} min="0" max="5" className="text-sm" />
-                                  </div>
-                                </div>
-
-                                {question.isAIGenerated && (
-                                  <div className="bg-card p-3 rounded border border-accent/30 mt-3">
-                                    <p className="text-xs text-accent">
-                                      🎯 <strong>AI will generate:</strong> A {question.difficulty.toLowerCase()} level question from {question.unit} worth {question.marks} marks{question.subQuestionsCount > 0 && ` with ${question.subQuestionsCount} sub-questions`}
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+            </label>
           </CardContent>
         </Card>
 
-        <div className="text-center mt-6">
-          <Button onClick={handleGenerate} size="lg" className="px-8 py-3 bg-gradient-primary hover:opacity-90 text-white" disabled={isGenerating}>
-            {isGenerating ? (
-              <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Generating...</>
-            ) : (
-              <><FileText className="w-5 h-5 mr-2" />Generate Question Paper</>
-            )}
-          </Button>
-        </div>
+        {/* Header upload */}
+        <Card className="border-gray-100 dark:border-gray-700 dark:bg-gray-800/60 shadow-none">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Image className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+              <CardTitle className="text-sm font-semibold text-gray-800 dark:text-white">Upload Header <span className="text-gray-400 font-normal text-xs">(optional)</span></CardTitle>
+            </div>
+            <CardDescription className="text-xs dark:text-gray-500">Institution logo or custom header image</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <input type="file" accept="image/*" onChange={handleHeaderImageUpload} className="hidden" id="header-upload" />
+            <label htmlFor="header-upload" className="block cursor-pointer">
+              <div className="border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-xl p-6 text-center hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-all duration-200 bg-gray-50/50 dark:bg-gray-900/30">
+                {headerImage ? (
+                  <>
+                    <img src={headerImage} alt="Header preview" className="max-h-20 mx-auto rounded-lg shadow-sm mb-2 object-contain" />
+                    <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Header uploaded — click to change</p>
+                  </>
+                ) : (
+                  <>
+                    <Image className="w-9 h-9 mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Click to upload header</p>
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">PNG, JPG up to 10MB</p>
+                  </>
+                )}
+              </div>
+            </label>
+          </CardContent>
+        </Card>
+      </div>
 
-        {popupMessage && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setPopupMessage(null)} />
-            <div className="relative bg-white rounded-2xl shadow-xl border border-gray-200 p-6 w-[340px] text-center animate-fade-in">
-              <p className="text-gray-700 mb-2">{popupMessage}</p>
+      {/* Configure */}
+      <Card className="animate-fade-in-up delay-200 border-gray-100 dark:border-gray-700 dark:bg-gray-800/60 shadow-none">
+        <CardHeader className="pb-4 border-b border-gray-50 dark:border-gray-700/60">
+          <div className="flex items-center gap-2">
+            <Settings className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+            <CardTitle className="text-sm font-semibold text-gray-800 dark:text-white">Configure Question Paper</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-5 space-y-6">
+          {/* Paper meta */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="university" className={labelCls}>University / Institution</Label>
+              <Input id="university" placeholder="e.g., Anna University" value={university} onChange={(e) => setUniversity(e.target.value)} className={inputCls} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="subject" className={labelCls}>Subject Name</Label>
+              <Input id="subject" placeholder="e.g., MATRICES AND CALCULUS" value={subjectName} onChange={(e) => setSubjectName(e.target.value)} readOnly={isSubjectLocked} className={`${inputCls} ${isSubjectLocked ? "cursor-not-allowed bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-500" : ""}`} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="date" className={labelCls}>Exam Date</Label>
+              <Input id="date" type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)} className={inputCls} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="duration" className={labelCls}>Duration</Label>
+              <Input id="duration" placeholder="e.g., 3 Hours" value={duration} onChange={(e) => setDuration(e.target.value)} className={inputCls} />
             </div>
           </div>
-        )}
+
+          {/* Sections */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs font-semibold text-gray-800 dark:text-white">Sections</p>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 rounded-full">
+                  Total: {totalMarks} marks
+                </span>
+                <Button onClick={addSection} size="sm" variant="outline" className="h-8 text-xs border-gray-200 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700">
+                  <Plus className="w-3.5 h-3.5 mr-1.5" /> Add Section
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {sections.map((section) => (
+                <div key={section.id} className="border border-gray-100 dark:border-gray-700 rounded-xl p-4">
+                  {/* Section header row */}
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-xs font-semibold text-gray-800 dark:text-white">{section.name} Configuration</p>
+                    {sections.length > 1 && (
+                      <button onClick={() => removeSection(section.id)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="space-y-1.5">
+                      <Label className={labelCls}>Section Name</Label>
+                      <Input value={section.name} onChange={(e) => updateSection(section.id, 'name', e.target.value)} placeholder="Section A" className={inputCls} />
+                    </div>
+                    <div className="flex items-center gap-3 pt-5">
+                      <Switch checked={section.isAutoGenerate} onCheckedChange={(checked) => updateSection(section.id, 'isAutoGenerate', checked)} />
+                      <Label className={`${labelCls} cursor-pointer`}>{section.isAutoGenerate ? 'Bulk AI Generation' : 'Individual Question Config'}</Label>
+                    </div>
+                  </div>
+
+                  {section.isAutoGenerate ? (
+                    <div className="space-y-4 bg-blue-50/40 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30">
+                      <div className="flex items-center gap-2">
+                        <Wand2 className="w-3.5 h-3.5 text-blue-500" />
+                        <p className="text-xs font-semibold text-gray-800 dark:text-white">Bulk AI Generation</p>
+                        <span className="text-[11px] text-gray-400 dark:text-gray-500">— common settings for all questions</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className={labelCls}>Questions</Label>
+                          <Input type="number" value={section.autoConfig.questionCount} onChange={(e) => updateAutoConfig(section.id, 'questionCount', parseInt(e.target.value) || 1)} min="1" max="20" className={inputCls} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className={labelCls}>Marks / Q</Label>
+                          <Input type="number" value={section.autoConfig.marksPerQuestion} onChange={(e) => updateAutoConfig(section.id, 'marksPerQuestion', parseInt(e.target.value) || 1)} min="1" max="20" className={inputCls} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className={labelCls}>Difficulty</Label>
+                          <Select value={section.autoConfig.difficulty} onValueChange={(value) => updateAutoConfig(section.id, 'difficulty', value)}>
+                            <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+                            <SelectContent className="dark:bg-gray-900 dark:border-gray-700">
+                              <SelectItem value="Easy">Easy</SelectItem>
+                              <SelectItem value="Medium">Medium</SelectItem>
+                              <SelectItem value="Hard">Hard</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className={labelCls}>Sub-Q / Q</Label>
+                          <Input type="number" value={section.autoConfig.subQuestionsCount} onChange={(e) => updateAutoConfig(section.id, 'subQuestionsCount', parseInt(e.target.value) || 0)} min="0" max="5" className={inputCls} />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className={`${labelCls} mb-2 block`}>Units to Include</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {units.map((unit) => (
+                            <button key={unit} onClick={() => toggleAutoUnit(section.id, unit)}
+                              className={["text-[11px] font-medium px-3 py-1.5 rounded-lg border transition-all",
+                                section.autoConfig.units.includes(unit)
+                                  ? "bg-gradient-to-r from-[#3F3D56] to-[#007AFF] text-white border-transparent"
+                                  : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600",
+                              ].join(" ")}>
+                              {unit}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 bg-purple-50/40 dark:bg-purple-900/10 p-4 rounded-xl border border-purple-100 dark:border-purple-900/30">
+                      <div className="flex items-center gap-2">
+                        <Brain className="w-3.5 h-3.5 text-purple-500" />
+                        <p className="text-xs font-semibold text-gray-800 dark:text-white">Individual Configuration</p>
+                      </div>
+                      <p className="text-[11px] text-gray-400 dark:text-gray-500">Set AI and manual question counts, then configure each individually</p>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-white/60 dark:bg-gray-800/40 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
+                        <div className="space-y-1.5">
+                          <Label className={labelCls}>AI Questions</Label>
+                          <Input type="number" value={section.individualConfig.aiQuestionCount} onChange={(e) => updateIndividualConfig(section.id, 'aiQuestionCount', parseInt(e.target.value) || 0)} min="0" max="20" className={inputCls} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className={labelCls}>Manual Questions</Label>
+                          <Input type="number" value={section.individualConfig.manualQuestionCount} onChange={(e) => updateIndividualConfig(section.id, 'manualQuestionCount', parseInt(e.target.value) || 0)} min="0" max="20" className={inputCls} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className={labelCls}>Default Marks</Label>
+                          <Input type="number" value={section.individualConfig.defaultMarks} onChange={(e) => updateIndividualConfig(section.id, 'defaultMarks', parseInt(e.target.value) || 1)} min="1" max="20" className={inputCls} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className={labelCls}>Default Difficulty</Label>
+                          <Select value={section.individualConfig.defaultDifficulty} onValueChange={(value) => updateIndividualConfig(section.id, 'defaultDifficulty', value)}>
+                            <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+                            <SelectContent className="dark:bg-gray-900 dark:border-gray-700">
+                              <SelectItem value="Easy">Easy</SelectItem>
+                              <SelectItem value="Medium">Medium</SelectItem>
+                              <SelectItem value="Hard">Hard</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 bg-white/60 dark:bg-gray-800/40 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
+                        <div className="space-y-1.5">
+                          <Label className={labelCls}>Default Unit</Label>
+                          <Select value={section.individualConfig.defaultUnit} onValueChange={(value) => updateIndividualConfig(section.id, 'defaultUnit', value)}>
+                            <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+                            <SelectContent className="dark:bg-gray-900 dark:border-gray-700">
+                              {units.map((unit) => <SelectItem key={unit} value={unit}>{unit}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className={labelCls}>Default Sub-questions</Label>
+                          <Input type="number" value={section.individualConfig.defaultSubQuestionsCount} onChange={(e) => updateIndividualConfig(section.id, 'defaultSubQuestionsCount', parseInt(e.target.value) || 0)} min="0" max="5" className={inputCls} />
+                        </div>
+                      </div>
+
+                      {section.questions.length === 0 ? (
+                        <div className="text-center py-8 rounded-xl bg-white/40 dark:bg-gray-800/30 border border-dashed border-gray-200 dark:border-gray-700">
+                          <Brain className="w-8 h-8 mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Set counts above — questions appear here for configuration</p>
+                        </div>
+                      ) : (
+                        <div className="bg-white/60 dark:bg-gray-800/40 rounded-xl px-3 py-2 border border-gray-100 dark:border-gray-700">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            <strong className="text-gray-800 dark:text-white">{section.questions.length} questions</strong>
+                            {" "}— {section.questions.filter(q => q.isAIGenerated).length} AI + {section.questions.filter(q => !q.isAIGenerated).length} Manual
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="space-y-3">
+                        {section.questions.map((question, questionIndex) => (
+                          <div key={question.id} className={["border rounded-xl p-4", question.isAIGenerated ? "bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30" : "bg-gray-50 dark:bg-gray-800/40 border-gray-200 dark:border-gray-700"].join(" ")}>
+                            <div className="flex justify-between items-start mb-3">
+                              <p className="text-xs font-semibold text-gray-800 dark:text-white flex items-center gap-1.5">
+                                {question.isAIGenerated && <Wand2 className="w-3.5 h-3.5 text-blue-500" />}
+                                Q{questionIndex + 1} {question.isAIGenerated ? '(AI)' : '(Manual)'}
+                              </p>
+                              <button onClick={() => removeQuestion(section.id, question.id)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+
+                            {!question.isAIGenerated && (
+                              <div className="mb-3 space-y-1.5">
+                                <Label className={labelCls}>Question Text</Label>
+                                <Textarea value={question.text || ""} onChange={(e) => updateQuestion(section.id, question.id, 'text', e.target.value)} placeholder="Enter your question here..." className="min-h-[64px] text-xs resize-none border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
+                              </div>
+                            )}
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                              <div className="space-y-1.5">
+                                <Label className={labelCls}>Marks</Label>
+                                <Input type="number" value={question.marks} onChange={(e) => updateQuestion(section.id, question.id, 'marks', parseInt(e.target.value) || 1)} min="1" max="20" className={inputCls} />
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label className={labelCls}>Difficulty</Label>
+                                <Select value={question.difficulty} onValueChange={(value) => updateQuestion(section.id, question.id, 'difficulty', value)}>
+                                  <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+                                  <SelectContent className="dark:bg-gray-900 dark:border-gray-700">
+                                    <SelectItem value="Easy">Easy</SelectItem>
+                                    <SelectItem value="Medium">Medium</SelectItem>
+                                    <SelectItem value="Hard">Hard</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label className={labelCls}>Unit</Label>
+                                <Select value={question.unit} onValueChange={(value) => updateQuestion(section.id, question.id, 'unit', value)}>
+                                  <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+                                  <SelectContent className="dark:bg-gray-900 dark:border-gray-700">
+                                    {units.map((unit) => <SelectItem key={unit} value={unit}>{unit}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label className={labelCls}>Sub-Q</Label>
+                                <Input type="number" value={question.subQuestionsCount} onChange={(e) => updateQuestion(section.id, question.id, 'subQuestionsCount', parseInt(e.target.value) || 0)} min="0" max="5" className={inputCls} />
+                              </div>
+                            </div>
+
+                            {question.isAIGenerated && (
+                              <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl px-3 py-2 border border-blue-100 dark:border-blue-900/30">
+                                <p className="text-[11px] text-blue-700 dark:text-blue-400">
+                                  AI will generate a <strong>{question.difficulty.toLowerCase()}</strong> question from <strong>{question.unit}</strong> worth <strong>{question.marks} marks</strong>{question.subQuestionsCount > 0 && ` with ${question.subQuestionsCount} sub-questions`}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Generate button */}
+      <div className="animate-fade-in-up delay-300 flex justify-center pb-4">
+        <Button onClick={handleGenerate} disabled={isGenerating} className="h-10 px-8 text-sm font-semibold bg-gradient-to-r from-[#3F3D56] to-[#007AFF] text-white hover:opacity-90">
+          {isGenerating
+            ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating…</>
+            : <><FileText className="w-4 h-4 mr-2" />Generate Question Paper</>
+          }
+        </Button>
       </div>
-      <Footer />
+
+      {/* Credits popup */}
+      {popupMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setPopupMessage(null)} />
+          <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 w-[340px] text-center">
+            <p className="text-sm text-gray-700 dark:text-gray-300">{popupMessage}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
