@@ -1,103 +1,99 @@
 import { Link } from "react-router-dom";
-import { Mail, MapPin, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-950 text-gray-400">
-      <div className="max-w-6xl mx-auto px-4 pt-12 pb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+    <footer className="bg-primary text-white py-16">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Brand Section */}
+          <div className="col-span-1 md:col-span-2">
+            <div className="flex items-center space-x-2 mb-4">
+<div className="flex items-center gap-4">
+  {/* Vinathaal Icon */}
+  <div
+    className="rounded-lg flex items-center justify-center overflow-hidden"
+    style={{ width: "114px", height: "114px" }}
+  >
+    <img
+      src="/vinathaal_icon.png"
+      alt="Vinathaal Logo"
+      className="object-contain w-full h-full"
+    />
+  </div>
 
-          {/* Brand */}
-          <div className="sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center gap-2 mb-3">
-              <img src="/vinathaal_icon.png" alt="Vinathaal" className="w-8 h-8 object-contain" />
-              <img src="/vinathaal-heading-white.png" alt="Vinathaal" className="h-6 object-contain" />
-            </div>
-            <p className="text-xs leading-relaxed text-gray-500 max-w-xs mb-4">
-              AI-powered question paper generation for educators and institutions. Save hours, maintain quality.
+  {/* Vinathaal Heading Logo */}
+  <div
+    className="flex items-center"
+    style={{ height: "54px" }}
+  >
+    <img
+      src="vinathaal-heading-white.png" 
+      alt="Vinathaal Heading"
+      className="object-contain h-full"
+    />
+  </div>
+</div>
+</div>
+
+
+            <p className="text-blue-200 leading-relaxed max-w-md">
+              Elevating minds, shaping futures through excellence in education and transformative learning experiences.
             </p>
-            <div className="flex items-center gap-3">
-              <a href="#" aria-label="Twitter" className="w-8 h-8 rounded-lg bg-gray-800 hover:bg-primary flex items-center justify-center transition-colors">
-                <Twitter className="w-3.5 h-3.5 text-gray-400 hover:text-white" />
-              </a>
-              <a href="#" aria-label="Instagram" className="w-8 h-8 rounded-lg bg-gray-800 hover:bg-primary flex items-center justify-center transition-colors">
-                <Instagram className="w-3.5 h-3.5 text-gray-400 hover:text-white" />
-              </a>
-              <a href="#" aria-label="LinkedIn" className="w-8 h-8 rounded-lg bg-gray-800 hover:bg-primary flex items-center justify-center transition-colors">
-                <Linkedin className="w-3.5 h-3.5 text-gray-400 hover:text-white" />
-              </a>
-            </div>
           </div>
 
-          {/* Product */}
+          {/* Quick Links */}
           <div>
-            <h5 className="text-xs font-semibold uppercase tracking-widest text-gray-300 mb-4">Product</h5>
-            <ul className="space-y-2.5">
-              {[
-                { to: "/generator?mode=syllabus", label: "Syllabus Generator" },
-                { to: "/generator?mode=questionbank", label: "Question Bank" },
-                { to: "/mcq-generator", label: "MCQ Generator" },
-                { to: "/templates", label: "Templates" },
-                { to: "/pricing", label: "Pricing" },
-              ].map(({ to, label }) => (
-                <li key={to}>
-                  <Link to={to} className="text-xs text-gray-500 hover:text-white transition-colors">
-                    {label}
-                  </Link>
-                </li>
-              ))}
+            <h4 className="text-accent font-semibold mb-4">Quick Links</h4>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/" className="text-blue-200 hover:text-white transition-colors">
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link to="/generator" className="text-blue-200 hover:text-white transition-colors">
+                  Generator
+                </Link>
+              </li>
+              <li>
+                <Link to="/mcq" className="text-blue-200 hover:text-white transition-colors">
+                  MCQ Generator
+                </Link>
+              </li>
+              <li>
+                <Link to="/pricing" className="text-blue-200 hover:text-white transition-colors">
+                  Pricing
+                </Link>
+              </li>
             </ul>
           </div>
 
-          {/* Company */}
+          {/* Get in Touch */}
           <div>
-            <h5 className="text-xs font-semibold uppercase tracking-widest text-gray-300 mb-4">Company</h5>
-            <ul className="space-y-2.5">
-              {[
-                { to: "/", label: "Home" },
-                { to: "/support", label: "Support" },
-                { to: "/login", label: "Login" },
-                { to: "/signup", label: "Sign Up" },
-              ].map(({ to, label }) => (
-                <li key={to}>
-                  <Link to={to} className="text-xs text-gray-500 hover:text-white transition-colors">
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h5 className="text-xs font-semibold uppercase tracking-widest text-gray-300 mb-4">Contact</h5>
+            <h4 className="text-accent font-semibold mb-4">Get in Touch</h4>
             <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <Mail className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
-                <a href="mailto:azhizensolutions@gmail.com" className="text-xs text-gray-500 hover:text-white transition-colors break-all">
-                  azhizensolutions@gmail.com
-                </a>
+              <div className="flex items-center space-x-2">
+                <Mail className="w-4 h-4 text-accent" />
+                <span className="text-blue-200">azhizensolutions@gmail.com</span>
               </div>
-              <div className="flex items-start gap-2">
-                <MapPin className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
-                <span className="text-xs text-gray-500 leading-relaxed">
-                  R-No 309, Mercury Block<br />
-                  KSRCE, Tiruchengode<br />
-                  Namakkal, Tamil Nadu
+              <div className="flex items-start space-x-2">
+                <MapPin className="w-4 h-4 text-accent mt-1" />
+                <span className="text-blue-200 text-sm">
+                  R-NO:309, Mercury Block<br />
+                  KSRCE, Tiruchengode, Namakkal, Tamil Nadu
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-gray-600">
-            © {new Date().getFullYear()} Vinathaal by Azhizen Solutions. All rights reserved.
-          </p>
-          <div className="flex items-center gap-4">
-            <Link to="/support" className="text-xs text-gray-600 hover:text-white transition-colors">Privacy</Link>
-            <Link to="/support" className="text-xs text-gray-600 hover:text-white transition-colors">Terms</Link>
+        {/* Bottom Section */}
+        <div className="border-t border-blue-800 mt-12 pt-8">
+          <div className="flex flex-col md:flex-row justify-center items-center">
+            <p className="text-blue-200 text-sm">
+              © 2025 Vinathaal Question Paper Generator. All rights reserved.
+            </p>
           </div>
         </div>
       </div>

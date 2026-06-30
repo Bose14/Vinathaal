@@ -1,4 +1,6 @@
+
 import { ReactNode } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface FeatureCardProps {
   icon: ReactNode;
@@ -8,15 +10,19 @@ interface FeatureCardProps {
 
 const FeatureCard = ({ icon, title, description }: FeatureCardProps) => {
   return (
-    <div className="flex gap-3 p-4 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:shadow-md transition-shadow group">
-      <div className="w-9 h-9 shrink-0 rounded-lg bg-gradient-primary flex items-center justify-center text-white">
-        {icon}
-      </div>
-      <div>
-        <p className="text-sm font-semibold text-foreground mb-0.5 group-hover:text-primary transition-colors">{title}</p>
-        <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
-      </div>
-    </div>
+    <Card className="h-full hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-card border-accent/20 group">
+      <CardHeader className="relative">
+        <div className="w-16 h-16 bg-gradient-primary rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-elegant">
+          <div className="text-white">
+            {icon}
+          </div>
+        </div>
+        <CardTitle className="text-xl font-semibold text-primary group-hover:text-accent transition-colors">{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-text-secondary leading-relaxed">{description}</p>
+      </CardContent>
+    </Card>
   );
 };
 
