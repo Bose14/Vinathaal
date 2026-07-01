@@ -57,7 +57,8 @@ jobs:
             echo "=== Deploying frontend ==="
             sudo rm -rf /var/www/vinathaal/*
             sudo cp -r dist/* /var/www/vinathaal/
-            sudo chown -R ubuntu:ubuntu /var/www/vinathaal
+            sudo chown -R www-data:www-data /var/www/vinathaal
+            sudo chmod -R 755 /var/www/vinathaal
 
             echo "=== Verifying deployment ==="
             pm2 status
